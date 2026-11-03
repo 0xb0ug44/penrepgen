@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ engagement.title }} - Penetration Test Report</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --critical: #881337;
+      --critical-bg: #ffe4e6;
+      --high: #c2410c;
+      --high-bg: #ffedd5;
+      --medium: #b45309;
+      --medium-bg: #fef3c7;
+      --low: #1d4ed8;
+      --low-bg: #dbeafe;
+      --info: #475569;
+      --info-bg: #f1f5f9;
+      --code-bg: #0f172a;
+      --code-text: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2.5rem 1rem;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* Cover / Header Card */
+    .cover-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .report-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #2563eb;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+    }
+
+    h1.report-title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 1.5rem;
+      line-height: 1.25;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .meta-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .meta-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .scope-list {
+      list-style-type: none;
+      padding-left: 0;
+      margin-top: 0.25rem;
+    }
+
+    .scope-pill {
+      display: inline-block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      margin-right: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    /* Section Styles */
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Findings Summary Table */
+    .summary-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .summary-table th,
+    .summary-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .summary-table th {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      background: #f8fafc;
+      font-weight: 600;
+    }
+
+    .summary-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      text-align: center;
+    }
+
+    .badge-critical {
+      background-color: var(--critical-bg);
+      color: var(--critical);
+      border: 1px solid #fecdd3;
+    }
+
+    .badge-high {
+      background-color: var(--high-bg);
+      color: var(--high);
+      border: 1px solid #fed7aa;
+    }
+
+    .badge-medium {
+      background-color: var(--medium-bg);
+      color: var(--medium);
+      border: 1px solid #fde68a;
+    }
+
+    .badge-low {
+      background-color: var(--low-bg);
+      color: var(--low);
+      border: 1px solid #bfdbfe;
+    }
+
+    .badge-info {
+      background-color: var(--info-bg);
+      color: var(--info);
+      border: 1px solid #cbd5e1;
+    }
+
+    .badge-cvss {
+      background-color: #0f172a;
+      color: #f8fafc;
+      border: 1px solid #1e293b;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 700;
+    }
+
+    .cvss-vector-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: #f1f5f9;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .summary-highlight {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Finding Detail Cards */
+    .finding-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 1.75rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .finding-header {
+      padding: 1.25rem 1.75rem;
+      border-bottom: 1px solid var(--border);
+      background: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .finding-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .finding-id {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      background: #f1f5f9;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .finding-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .finding-body {
+      padding: 1.75rem;
+    }
+
+    .finding-field {
+      margin-bottom: 1.25rem;
+    }
+
+    .finding-field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .field-content {
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .target-host {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 600;
+      color: #0f172a;
+      background: #f1f5f9;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    pre.evidence-block {
+      background-color: var(--code-bg);
+      color: var(--code-text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      padding: 1rem 1.25rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-top: 0.35rem;
+      border: 1px solid #1e293b;
+    }
+
+    .reference-list {
+      list-style-type: disc;
+      padding-left: 1.25rem;
+      margin-top: 0.25rem;
+    }
+
+    .reference-list li {
+      margin-bottom: 0.25rem;
+      font-size: 0.9rem;
+    }
+
+    /* Footer */
+    footer.report-footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* Print media styles */
+    @media print {
+      body {
+        background-color: #ffffff;
+        color: #000000;
+        padding: 0;
+        font-size: 11pt;
+      }
+
+      .container {
+        max-width: 100%;
+        margin: 0;
+      }
+
+      .cover-card,
+      .summary-card,
+      .finding-card {
+        box-shadow: none;
+        border: 1px solid #cbd5e1;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .cover-card {
+        margin-bottom: 1.5rem;
+      }
+
+      pre.evidence-block {
+        background-color: #f1f5f9;
+        color: #0f172a;
+        border: 1px solid #cbd5e1;
+      }
+
+      footer.report-footer {
+        border-top: 1px solid #cbd5e1;
+        margin-top: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Cover Section -->
+    <header class="cover-card">
+      <span class="report-badge">Penetration Test Report</span>
+      <h1 class="report-title">{{ engagement.title }}</h1>
+      <div class="meta-grid">
+        <div class="meta-item">
+          <span class="meta-label">Client</span>
+          <span class="meta-value">{{ engagement.client }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Assessor / Tester</span>
+          <span class="meta-value">{{ engagement.tester }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Assessment Date</span>
+          <span class="meta-value">{{ engagement.date }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Scope</span>
+          <div class="scope-list">
+            {% for target in engagement.scope %}
+            <span class="scope-pill">{{ target }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Findings Summary Table -->
+    <section class="summary-card">
+      <h2 class="section-title">Findings Summary</h2>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Severity</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-critical">Critical</span></td>
+            <td><strong>{{ summary.Critical }}</strong></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-high">High</span></td>
+            <td><strong>{{ summary.High }}</strong></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td><strong>{{ summary.Medium }}</strong></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><strong>{{ summary.Low }}</strong></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-info">Info</span></td>
+            <td><strong>{{ summary.Info }}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      {% if summary.highest_cvss is not none %}
+      <div class="summary-highlight">
+        <span>Highest CVSS Base Score:</span>
+        <span class="badge badge-cvss">{{ summary.highest_cvss }}</span>
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- Detailed Findings List -->
+    <section>
+      <h2 class="section-title">Detailed Findings ({{ findings | length }})</h2>
+      {% for finding in findings %}
+      <article class="finding-card" id="{{ finding.id }}">
+        <div class="finding-header">
+          <div class="finding-header-left">
+            <span class="finding-id">{{ finding.id }}</span>
+            <h3 class="finding-title">{{ finding.title }}</h3>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span class="badge badge-{{ finding.severity.lower() }}">{{ finding.severity }}</span>
+            {% if finding.cvss_score is not none %}
+            <span class="badge badge-cvss" title="{{ finding.cvss_vector }}">CVSS {{ finding.cvss_score }}</span>
+            <span class="cvss-vector-text">{{ finding.cvss_vector }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="finding-body">
+          {% if finding.cvss_vector %}
+          <div class="finding-field">
+            <div class="field-label">CVSS v3.1 Base Score & Vector</div>
+            <div class="field-content">
+              <strong>{{ finding.cvss_score }} ({{ finding.severity }})</strong> &mdash; <span class="cvss-vector-text">{{ finding.cvss_vector }}</span>
+            </div>
+          </div>
+          {% endif %}
+          <div class="finding-field">
+            <div class="field-label">Affected Host / Target</div>
+            <div class="field-content"><span class="target-host">{{ finding.host }}</span></div>
+          </div>
+
+          <div class="finding-field">
+            <div class="field-label">Description</div>
+            <div class="field-content">{{ finding.description }}</div>
+          </div>
+
+          {% if finding.evidence %}
+          <div class="finding-field">
+            <div class="field-label">Evidence / Proof of Concept</div>
+            <pre class="evidence-block"><code>{{ finding.evidence }}</code></pre>
+          </div>
+          {% endif %}
+
+          <div class="finding-field">
+            <div class="field-label">Remediation</div>
+            <div class="field-content">{{ finding.remediation }}</div>
+          </div>
+
+          {% if finding.references and finding.references | length > 0 %}
+          <div class="finding-field">
+            <div class="field-label">References</div>
+            <ul class="reference-list">
+              {% for ref in finding.references %}
+              <li>{{ ref }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+
+    <!-- Disclaimer Footer -->
+    <footer class="report-footer">
+      <p>Generated for authorized security testing and documentation purposes.</p>
+    </footer>
+  </div>
+</body>
+</html>
