@@ -1,0 +1,69 @@
+# {{ engagement.title }}
+
+**Assessment Report**
+
+---
+
+## Engagement Details
+
+| Field | Value |
+| :--- | :--- |
+| **Client** | {{ engagement.client }} |
+| **Assessor / Tester** | {{ engagement.tester }} |
+| **Date** | {{ engagement.date }} |
+| **Scope** | {{ engagement.scope | join(', ') }} |
+
+---
+
+## Findings Summary
+
+| Severity | Count |
+| :--- | :---: |
+| **Critical** | {{ summary.Critical }} |
+| **High** | {{ summary.High }} |
+| **Medium** | {{ summary.Medium }} |
+| **Low** | {{ summary.Low }} |
+| **Info** | {{ summary.Info }} |
+
+{% if summary.highest_cvss is not none %}
+**Highest CVSS Base Score:** `{{ summary.highest_cvss }}`
+{% endif %}
+
+---
+
+## Detailed Findings
+
+{% for finding in findings %}
+### [{{ finding.id }}] {{ finding.title }}
+
+{% if finding.cvss_score is not none %}
+- **Severity:** `{{ finding.severity }}` | **CVSS:** `{{ finding.cvss_score }}` (`{{ finding.cvss_vector }}`)
+{% else %}
+- **Severity:** `{{ finding.severity }}`
+{% endif %}
+- **Host / Target:** `{{ finding.host }}`
+
+#### Description
+{{ finding.description }}
+
+{% if finding.evidence %}
+#### Evidence / Proof of Concept
+```text
+{{ finding.evidence }}
+```
+{% endif %}
+
+#### Remediation
+{{ finding.remediation }}
+
+{% if finding.references and finding.references | length > 0 %}
+#### References
+{% for ref in finding.references %}
+- {{ ref }}
+{% endfor %}
+{% endif %}
+
+---
+
+{% endfor %}
+*Generated for authorized security testing and documentation purposes.*
